@@ -8,7 +8,7 @@ from datetime import datetime
 
 from homeassistant.const import STATE_UNAVAILABLE
 
-from .const import SECTION_DETAILED
+from .const import SECTION_DETAILED, parse_device_entry
 
 
 def add_unique(data: dict[str, Any], key: str, value: Any):
@@ -261,7 +261,12 @@ def parse_devices(input_html: str, device_list_str: str, previous_devices: dict[
         data["top_uploader_hostname"] = {"value": top_upload_device.get("hostname")}
 
         data[SECTION_DETAILED] = {}
-        device_list = [x.strip() for x in (device_list_str or "").split(",")]
+        # Parse device list entries to extract MAC addresses for matching
+        device_list = []
+        for entry in (device_list_str or "").replace("\n", ",").split(","):
+            friendly_name, device_id = parse_device_entry(entry)
+            if device_id:
+                device_list.append(device_id)
         now_ts = datetime.now().timestamp()
         previous_detailed = (previous_devices or {}).get(SECTION_DETAILED, {}) if previous_devices else {}
         for device in devices:
