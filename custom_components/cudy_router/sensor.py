@@ -525,11 +525,19 @@ class CudyRouterPresenceSensor(CudyRouterDeviceSensor):
         if last_seen and (now_ts - last_seen) <= timeout:
             connection = (device.get("connection") or "").lower()
             signal = device.get("signal")
-            if connection == "wired":
+
+            # Wired connections are always home
+            if "wired" in connection:
                 return "home"
+
+            # Wireless: check signal if enabled, otherwise consider present
             if signal_check:
-                if signal and str(signal).strip() != "" and str(signal).strip() != "---":
+                if signal and str(signal).strip() not in ("", "---"):
                     return "home"
+            else:
+                # Signal check disabled - any device within timeout is home
+                return "home"
+
         return "not_home"
 
     @property
