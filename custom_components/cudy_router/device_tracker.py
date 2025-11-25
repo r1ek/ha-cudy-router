@@ -23,6 +23,8 @@ async def async_setup_entry(
     """Set up device tracker entities from config entry."""
     coordinator: CudyRouterDataUpdateCoordinator = hass.data[DOMAIN][config_entry.entry_id]
     device_list = config_entry.options.get(OPTIONS_DEVICELIST, "")
+    # Support both comma and newline separated values
+    device_list = device_list.replace("\n", ",")
     tracked_macs = [mac.strip() for mac in device_list.split(",") if mac.strip()]
     entities = []
     for mac in tracked_macs:

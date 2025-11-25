@@ -14,9 +14,34 @@ This integration logs in to the standard administration UI and
 scrapes the information from HTML pages.
 Although Cudy routers has a JSON RPC interface, it is not open for the public.
 
-- Provides sensors about 4G/LTE connection (network, cell, signal)
-- Provides sensors about devices (count, top bandwidth users)
-- Detailed report about configured devices (IP, bandwidth usage)
+### Network & 4G/LTE Monitoring
+- 4G/LTE connection sensors (network type, cell info, signal strength)
+- RSSI, RSRP, RSRQ, SINR measurements
+- Band information (carrier aggregation support)
+- SIM slot detection
+
+### Device Tracking & Presence Detection
+- **Binary sensors** for device presence (perfect for automations!)
+- **Device trackers** for integration with Home Assistant presence
+- Individual device sensors with detailed information
+- Configurable presence timeout and signal checking
+- Support for both MAC address and hostname tracking
+
+### Network Usage Monitoring
+- Total connected devices count
+- Individual device bandwidth usage (upload/download speeds)
+- Top bandwidth users detection
+- Connection type detection (Wired/2.4G/5G WiFi)
+- WiFi signal strength per device
+
+### Rich Device Attributes
+All device entities include detailed attributes:
+- IP address, MAC address, hostname
+- Connection type (Wired/WiFi band)
+- Current bandwidth usage
+- WiFi signal strength
+- Online time
+- Last seen timestamp
 
 ## Installing
 
@@ -25,6 +50,46 @@ Although Cudy routers has a JSON RPC interface, it is not open for the public.
 The easiest way to install is via HACS (Home Assistant Community Store). Add this repository as a custom repository in HACS, then search for "Cudy Router" and install.
 
 Alternatively, you can manually put the `custom_components/cudy_router` folder into your Home Assistant `custom_components` folder.
+
+## Configuration
+
+After installation:
+
+1. Go to **Settings** → **Devices & Services**
+2. Click **+ Add Integration**
+3. Search for "Cudy Router"
+4. Enter your router credentials:
+   - **Host**: Your router's IP address (e.g., 192.168.10.1)
+   - **Username**: Admin username
+   - **Password**: Admin password
+
+### Device Tracking Setup
+
+To track specific devices and create presence sensors:
+
+1. Go to the integration in **Settings** → **Devices & Services**
+2. Click **Configure** on the Cudy Router integration
+3. In the **Tracked devices** field, enter MAC addresses or hostnames:
+   - One per line, or comma-separated
+   - Example: `B4:FB:E3:BC:F0:13, Camera, homeassistant`
+4. Configure optional settings:
+   - **Scan interval**: How often to poll the router (default: 15 seconds)
+   - **Presence timeout**: How long before marking device as away (default: 180 seconds)
+   - **Check signal strength**: Require valid WiFi signal for presence (default: enabled)
+
+This will create:
+- Binary sensors: `binary_sensor.<device>_connectivity` (on/off)
+- Device trackers: `device_tracker.cudy_device_<mac>`
+- Detailed sensors for each device (speed, signal, etc.)
+
+## Using in Automations
+
+See [AUTOMATIONS.md](AUTOMATIONS.md) for detailed examples including:
+- Presence detection automations
+- Bandwidth monitoring alerts
+- Device connection notifications
+- Looping through all connected devices
+- And many more examples!
 
 ## Contributing
 

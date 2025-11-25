@@ -126,7 +126,12 @@ class CudyRouterOptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Optional(
                         OPTIONS_DEVICELIST,
                         default=options.get(OPTIONS_DEVICELIST) or "",
-                    ): str,
+                    ): selector.TextSelector(
+                        selector.TextSelectorConfig(
+                            multiline=True,
+                            type=selector.TextSelectorType.TEXT,
+                        ),
+                    ),
                     vol.Optional(
                         CONF_SCAN_INTERVAL,
                         default=options.get(CONF_SCAN_INTERVAL) or 15,
@@ -154,7 +159,7 @@ class CudyRouterOptionsFlowHandler(config_entries.OptionsFlow):
                     vol.Optional(
                         OPTIONS_PRESENCE_SIGNAL_CHECK,
                         default=options.get(OPTIONS_PRESENCE_SIGNAL_CHECK, True),
-                    ): bool,
+                    ): selector.BooleanSelector(),
                 }
             ),
             errors=errors,

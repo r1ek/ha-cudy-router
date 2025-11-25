@@ -315,9 +315,12 @@ async def async_setup_entry(
             )
         )
     options = config_entry.options
+    # Support both comma and newline separated values
+    device_list_str = (options and options.get(OPTIONS_DEVICELIST)) or ""
+    device_list_str = device_list_str.replace("\n", ",")
     device_list = [
         x.strip()
-        for x in ((options and options.get(OPTIONS_DEVICELIST)) or "").split(",")
+        for x in device_list_str.split(",")
     ]
 
     for device_id in device_list:

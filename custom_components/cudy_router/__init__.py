@@ -9,7 +9,7 @@ from .const import DOMAIN
 from .coordinator import CudyRouterDataUpdateCoordinator
 from .router import CudyRouter
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.DEVICE_TRACKER]
+PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR, Platform.DEVICE_TRACKER]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
