@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
 from typing import Any
 
 from homeassistant.components.device_tracker import SourceType, TrackerEntity
@@ -10,7 +11,15 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, MODULE_DEVICES, OPTIONS_DEVICELIST, parse_device_entry
+from .const import (
+    DOMAIN,
+    MODULE_DEVICES,
+    OPTIONS_DEVICELIST,
+    OPTIONS_PRESENCE_TIMEOUT,
+    OPTIONS_PRESENCE_SIGNAL_CHECK,
+    SECTION_DETAILED,
+    parse_device_entry,
+)
 from .coordinator import CudyRouterDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -54,35 +63,59 @@ class CudyRouterDeviceTracker(CoordinatorEntity, TrackerEntity):
 
     @property
     def is_connected(self) -> bool:
-        """Return true if the device is connected: Wired or has a valid signal."""
-        devices = self.coordinator.data.get(MODULE_DEVICES, [])
-        _LOGGER.warning("[CudyRouterDeviceTracker] Devices in coordinator: %s", devices)
-        _LOGGER.warning("[CudyRouterDeviceTracker] Looking for device: %s", self._device_id)
-        for dev in devices:
-            _LOGGER.warning("[CudyRouterDeviceTracker] Checking device: %s", dev)
-            if isinstance(dev, dict) and dev.get("mac") and dev["mac"].lower() == self._device_id.lower():
-                connection = dev.get("connection", "").lower()
-                signal = dev.get("signal")
-                _LOGGER.warning("[CudyRouterDeviceTracker] Found device with MAC %s: connection=%s, signal=%s", self._device_id, connection, signal)
-                # Connected if Wired, or signal is present and not empty or '---'
-                if connection == "wired":
-                    return True
-                if signal and str(signal).strip() != "" and str(signal).strip() != "---":
-                    return True
-                return False
-        _LOGGER.warning("[CudyRouterDeviceTracker] Device with MAC %s not found in devices list", self._device_id)
+        """Return true if the device is connected (uses same logic as binary sensor)."""
+        if not self.coordinator.data:
+            return False
+
+        devices_module = self.coordinator.data.get(MODULE_DEVICES, {})
+        detailed = devices_module.get(SECTION_DETAILED, {})
+        device = detailed.get(self._device_id)
+
+        if not device:
+            return False
+
+        # Get configuration options
+        config_entry = self.coordinator.config_entry
+        timeout = int(config_entry.options.get(OPTIONS_PRESENCE_TIMEOUT, 180))
+        signal_check = config_entry.options.get(OPTIONS_PRESENCE_SIGNAL_CHECK, True)
+        if isinstance(signal_check, str):
+            signal_check = signal_check.lower() == "true"
+
+        # Check last seen timestamp
+        last_seen = device.get("last_seen")
+        now_ts = datetime.now().timestamp()
+
+        if last_seen and (now_ts - last_seen) <= timeout:
+            connection = (device.get("connection") or "").lower()
+            signal = device.get("signal")
+
+            # Wired connections are always considered connected
+            if "wired" in connection:
+                return True
+
+            # Wireless connections: check signal if enabled
+            if signal_check:
+                return signal and str(signal).strip() not in ("", "---")
+            else:
+                # If signal check disabled, any device within timeout is connected
+                return True
+
         return False
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         """Return extra attributes for the device tracker."""
-        devices = self.coordinator.data.get(MODULE_DEVICES, [])
-        for dev in devices:
-            if isinstance(dev, dict) and dev.get("mac") and dev["mac"].lower() == self._device_id.lower():
-                return dev.copy()
+        if not self.coordinator.data:
+            return {}
+
+        devices_module = self.coordinator.data.get(MODULE_DEVICES, {})
+        detailed = devices_module.get(SECTION_DETAILED, {})
+        device = detailed.get(self._device_id)
+
+        if device:
+            return device.copy()
         return {}
 
     async def async_update(self) -> None:
-        """Force update of the entity state and log call."""
-        _LOGGER.warning("[CudyRouterDeviceTracker] async_update called for device: %s", self._device_id)
+        """Force update of the entity state."""
         self.async_write_ha_state()
