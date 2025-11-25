@@ -14,6 +14,7 @@ from .const import (
     SECTION_DETAILED,
     OPTIONS_PRESENCE_TIMEOUT,
     OPTIONS_PRESENCE_SIGNAL_CHECK,
+    parse_device_entry,
 )
 from .coordinator import CudyRouterDataUpdateCoordinator
 
@@ -318,35 +319,38 @@ async def async_setup_entry(
     # Support both comma and newline separated values
     device_list_str = (options and options.get(OPTIONS_DEVICELIST)) or ""
     device_list_str = device_list_str.replace("\n", ",")
-    device_list = [
+    device_entries = [
         x.strip()
         for x in device_list_str.split(",")
     ]
 
-    for device_id in device_list:
+    for device_entry in device_entries:
+        if not device_entry:
+            continue
+        friendly_name, device_id = parse_device_entry(device_entry)
         if not device_id:
             continue
         entities.append(
-            CudyRouterDeviceSensor(coordinator, name, device_id, DEVICE_MAC_SENSOR)
+            CudyRouterDeviceSensor(coordinator, name, friendly_name, device_id, DEVICE_MAC_SENSOR)
         )
         entities.append(
-            CudyRouterDeviceSensor(coordinator, name, device_id, DEVICE_HOSTNAME_SENSOR)
+            CudyRouterDeviceSensor(coordinator, name, friendly_name, device_id, DEVICE_HOSTNAME_SENSOR)
         )
         entities.append(
-            CudyRouterDeviceSensor(coordinator, name, device_id, DEVICE_UPLOAD_SENSOR)
+            CudyRouterDeviceSensor(coordinator, name, friendly_name, device_id, DEVICE_UPLOAD_SENSOR)
         )
         entities.append(
-            CudyRouterDeviceSensor(coordinator, name, device_id, DEVICE_DOWNLOAD_SENSOR)
+            CudyRouterDeviceSensor(coordinator, name, friendly_name, device_id, DEVICE_DOWNLOAD_SENSOR)
         )
         entities.append(
-            CudyRouterDeviceSensor(coordinator, name, device_id, DEVICE_ONLINE_SENSOR)
+            CudyRouterDeviceSensor(coordinator, name, friendly_name, device_id, DEVICE_ONLINE_SENSOR)
         )
         entities.append(
-            CudyRouterDeviceSensor(coordinator, name, device_id, DEVICE_SIGNAL_SENSOR)
+            CudyRouterDeviceSensor(coordinator, name, friendly_name, device_id, DEVICE_SIGNAL_SENSOR)
         )
         # Use the new presence sensor class for presence
         entities.append(
-            CudyRouterPresenceSensor(coordinator, name, device_id, DEVICE_PRESENCE_SENSOR)
+            CudyRouterPresenceSensor(coordinator, name, friendly_name, device_id, DEVICE_PRESENCE_SENSOR)
         )
 
     async_add_entities(entities)
@@ -363,6 +367,7 @@ class CudyRouterDeviceSensor(
         self,
         coordinator: CudyRouterDataUpdateCoordinator,
         name: str | None,
+        friendly_name: str,
         device_id: str,
         descriptionTemplate: CudyRouterSensorEntityDescription,
     ) -> None:
@@ -378,10 +383,11 @@ class CudyRouterDeviceSensor(
             name_suffix=descriptionTemplate.name_suffix,
         )
         self.entity_description = description
+        self._friendly_name = friendly_name
         self.device_key = device_id
-        self._sensor_name_prefix = as_name(device_id)
+        self._sensor_name_prefix = as_name(friendly_name)
         self._attrs: dict[str, Any] = {}
-        self._attr_name = f"{device_id} {description.name_suffix}".strip()
+        self._attr_name = f"{friendly_name} {description.name_suffix}".strip()
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, coordinator.config_entry.entry_id)},
             manufacturer="Cudy",

@@ -69,18 +69,29 @@ To track specific devices and create presence sensors:
 
 1. Go to the integration in **Settings** → **Devices & Services**
 2. Click **Configure** on the Cudy Router integration
-3. In the **Tracked devices** field, enter MAC addresses or hostnames:
+3. In the **Tracked devices** field, enter MAC addresses with optional friendly names:
+   - Format: `FriendlyName=MAC` or just `MAC`
    - One per line, or comma-separated
-   - Example: `B4:FB:E3:BC:F0:13, Camera, homeassistant`
+   - Example:
+     ```
+     Steve=B4:FB:E3:BC:F0:13
+     John=38:BE:AB:59:AC:17
+     Camera=DC:B4:D9:C4:3D:5C
+     ```
+   - When Steve changes phones, just update: `Steve=NEW_MAC_ADDRESS`
 4. Configure optional settings:
    - **Scan interval**: How often to poll the router (default: 15 seconds)
    - **Presence timeout**: How long before marking device as away (default: 180 seconds)
    - **Check signal strength**: Require valid WiFi signal for presence (default: enabled)
 
 This will create:
-- Binary sensors: `binary_sensor.<device>_connectivity` (on/off)
-- Device trackers: `device_tracker.cudy_device_<mac>`
+- Binary sensors: `binary_sensor.cudyr_<friendly_name>_connectivity` (on/off)
+- Device trackers: `device_tracker.cudy_router_<friendly_name>`
 - Detailed sensors for each device (speed, signal, etc.)
+
+**Example entities with friendly names:**
+- `Steve=B4:FB:E3:BC:F0:13` creates: `binary_sensor.cudyr_steve_connectivity`
+- Easy to use in automations - when Steve changes phones, just update the MAC!
 
 ## Using in Automations
 

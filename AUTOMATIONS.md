@@ -2,16 +2,31 @@
 
 This document provides examples of how to use the Cudy Router integration entities in your Home Assistant automations.
 
+## Device Configuration Format
+
+Use the format `FriendlyName=MAC` when configuring tracked devices:
+```
+Steve=B4:FB:E3:BC:F0:13
+John=38:BE:AB:59:AC:17
+Camera=DC:B4:D9:C4:3D:5C
+```
+
+This creates entities with friendly names like `binary_sensor.cudyr_steve_connectivity` instead of long MAC-based names. When Steve changes phones, just update the MAC address in one place!
+
 ## Available Entities
 
 After configuring the integration and adding devices to track, you'll have:
 
 ### 1. Binary Sensors (NEW!)
-- `binary_sensor.<device_id>_connectivity` - Individual device presence (on/off)
+- `binary_sensor.cudyr_<friendly_name>_connectivity` - Individual device presence (on/off)
 - `binary_sensor.cudyr_any_device_connected` - True if any device is connected
 
+**Example:** `Steve=B4:FB:E3:BC:F0:13` creates `binary_sensor.cudyr_steve_connectivity`
+
 ### 2. Device Trackers
-- `device_tracker.cudy_device_<mac>` - Classic Home Assistant device tracker (home/not_home)
+- `device_tracker.cudy_router_<friendly_name>` - Classic Home Assistant device tracker (home/not_home)
+
+**Example:** `Steve=B4:FB:E3:BC:F0:13` creates `device_tracker.cudy_router_steve`
 
 ### 3. Sensors
 - `sensor.cudyr_connected_devices` - Total count with all devices in attributes
@@ -26,14 +41,14 @@ After configuring the integration and adding devices to track, you'll have:
 
 ### 1. Notify When Specific Device Connects
 
-Using the new **binary sensor** (recommended):
+Using the new **binary sensor** with friendly name (recommended):
 
 ```yaml
 automation:
-  - alias: "Notify when phone connects to WiFi"
+  - alias: "Notify when Steve's phone connects"
     trigger:
       - platform: state
-        entity_id: binary_sensor.b4_fb_e3_bc_f0_13_connectivity
+        entity_id: binary_sensor.cudyr_steve_connectivity
         to: "on"
     action:
       - service: notify.mobile_app

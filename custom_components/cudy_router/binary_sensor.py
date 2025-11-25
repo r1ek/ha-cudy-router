@@ -22,6 +22,7 @@ from .const import (
     OPTIONS_PRESENCE_TIMEOUT,
     OPTIONS_PRESENCE_SIGNAL_CHECK,
     SECTION_DETAILED,
+    parse_device_entry,
 )
 from .coordinator import CudyRouterDataUpdateCoordinator
 
@@ -47,8 +48,10 @@ async def async_setup_entry(
     entities = []
 
     # Create a binary sensor for each tracked device
-    for device_id in tracked_devices:
-        entities.append(CudyRouterDevicePresenceBinarySensor(coordinator, device_id))
+    for device_entry in tracked_devices:
+        friendly_name, device_id = parse_device_entry(device_entry)
+        if device_id:
+            entities.append(CudyRouterDevicePresenceBinarySensor(coordinator, friendly_name, device_id))
 
     # Add a binary sensor for "any device connected"
     entities.append(CudyRouterAnyDeviceConnectedSensor(coordinator))
@@ -65,14 +68,17 @@ class CudyRouterDevicePresenceBinarySensor(
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
 
     def __init__(
-        self, coordinator: CudyRouterDataUpdateCoordinator, device_id: str
+        self, coordinator: CudyRouterDataUpdateCoordinator, friendly_name: str, device_id: str
     ) -> None:
         """Initialize the binary sensor."""
         super().__init__(coordinator)
+        self._friendly_name = friendly_name
         self._device_id = device_id
-        self._attr_name = f"{device_id} connectivity"
+        self._attr_name = f"{friendly_name} connectivity"
+        # Use friendly name for entity_id
+        safe_name = friendly_name.replace(':', '').replace('-', '_').replace(' ', '_').lower()
         self._attr_unique_id = (
-            f"{coordinator.config_entry.entry_id}_presence_{device_id.replace(':', '').replace('-', '_').lower()}"
+            f"{coordinator.config_entry.entry_id}_presence_{safe_name}"
         )
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, coordinator.config_entry.entry_id)},

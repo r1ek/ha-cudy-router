@@ -38,7 +38,7 @@
                     "presence_signal_check": "Check signal strength for presence detection"
                 },
                 "data_description": {
-                    "device_list": "Enter MAC addresses or hostnames to track (e.g., B4:FB:E3:BC:F0:13 or Camera). One per line or comma-separated. Creates binary sensors, device trackers, and detailed sensors for each device.",
+                    "device_list": "Enter devices to track with format: FriendlyName=MAC (e.g., Steve=B4:FB:E3:BC:F0:13) or just MAC address. One per line or comma-separated. Creates binary sensors, device trackers, and detailed sensors using the friendly name.",
                     "scan_interval": "How often to poll the router for updates (in seconds)",
                     "presence_timeout": "How long a device can be offline before marked as away (in seconds)",
                     "presence_signal_check": "For wireless devices, require valid signal to consider device present (disable for faster presence detection)"
